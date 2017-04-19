@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # get from https://wiki.mikrotik.com/wiki/Manual:API
 
-import sys, posix, time, binascii, socket, select, hashlib
+import sys, posix, time, binascii, socket, select, hashlib, mikrotik_backup, mikrotik_device
 
 
 class ApiRos(object):
@@ -59,13 +59,13 @@ class ApiRos(object):
             r.append(w)
 
     def write_word(self, w):
-        # print "<<< " + w
+        #print "<<< " + w
         self.write_len(len(w))
         self.write_str(w)
 
     def read_word(self):
         ret = self.read_str(self.read_len())
-        # print ">>> " + ret
+        #print ">>> " + ret
         return ret
 
     def write_len(self, l):
@@ -142,6 +142,23 @@ class ApiRos(object):
             ret += s
         return ret
 
+    def parse_out(self):
+        r = select.select([self.sock], [], [], None)
+        if self.sock in r[0]:
+            # something to read in socket, read sentence
+            output_data = self.read_sentence()
+            # read result, return '!done' if all ok
+            output_status = self.read_sentence()
+            params = {}
+
+            # Check return status, if "!re" command executed correct
+            if output_data[0] == "!re":
+                # Read output lines, [1:] add for remove "!re" in
+                for line in output_data[1:]:
+                    line = str(line).split('=')[1:]
+                    params[line[0]] = line[1]
+                return params
+
 
 def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -149,53 +166,29 @@ def main():
     apiros = ApiRos(sock)
     apiros.login(sys.argv[2], sys.argv[3])
 
-    input_sentence = ["/system/identity/print"]
+    mt_dev = mikrotik_device.MtDevice(apiros)
+    mikrotik_backup.backup(mt_dev)
 
+    input_sentence = []
 
-    apiros.write_sentence(input_sentence)
+    while True:
+        r = select.select([sock, sys.stdin], [], [], None)
+        if sock in r[0]:
+            # something to read in socket, read sentence
+            x = apiros.read_sentence()
 
-    r = select.select([sock], [], [], None)
-    if sock in r[0]:
-        # something to read in socket, read sentence
-        output = apiros.read_sentence()
-        params = {}
+        if sys.stdin in r[0]:
+            # read line from input and strip off newline
+            l = sys.stdin.readline()
+            l = l[:-1]
 
-        # Check return status, if "!re" command executed correct
-        if output[0] == "!re":
-            # Read output lines, [1:] add for remove "!re" in
-            for line in output[1:]:
-
-                line = str(line).split('=')[1:]
-                params[line[0]] = line[1]
-            print params['name']
-
-# Default main()
-# def main():
-#     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#     s.connect((sys.argv[1], 8728))
-#     apiros = ApiRos(s)
-#     apiros.login(sys.argv[2], sys.argv[3])
-#
-#     input_sentence = []
-#
-#     while True:
-#         r = select.select([s, sys.stdin], [], [], None)
-#         if s in r[0]:
-#             # something to read in socket, read sentence
-#             x = apiros.read_sentence()
-#
-#         if sys.stdin in r[0]:
-#             # read line from input and strip off newline
-#             l = sys.stdin.readline()
-#             l = l[:-1]
-#
-#             # if empty line, send sentence and start with new
-#             # otherwise append to input sentence
-#             if l == '':
-#                 apiros.write_sentence(input_sentence)
-#                 input_sentence = []
-#             else:
-#                 input_sentence.append(l)
+            # if empty line, send sentence and start with new
+            # otherwise append to input sentence
+            if l == '':
+                apiros.write_sentence(input_sentence)
+                input_sentence = []
+            else:
+                input_sentence.append(l)
 
 
 if __name__ == '__main__':

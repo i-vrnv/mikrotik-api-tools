@@ -1,5 +1,11 @@
 class MtDevice(object):
+    """
+    This class contain information about device
+    """
     def __init__(self, apiros):
+        """
+        :param apiros: instance of ApiROS class
+        """
         self.apiros = apiros
         self.identity = self.get_identity()
 
@@ -13,6 +19,10 @@ class MtDevice(object):
         self.current_firmware = info['current-firmware']
 
     def get_identity(self):
+        """
+        Get device identity
+        :return: Mikrotik identity
+        """
         self.apiros.write_sentence(["/system/identity/print"])
         info = self.apiros.parse_out()
         return info['name']

@@ -161,11 +161,15 @@ class ApiRos(object):
 
 
 def main():
+    # Create socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((sys.argv[1], 8728))
+
+    # Create apiros instance
     apiros = ApiRos(sock)
     apiros.login(sys.argv[2], sys.argv[3])
 
+    # Create MtDevice instance
     mt_dev = mikrotik_device.MtDevice(apiros)
     mikrotik_backup.backup(mt_dev)
 
@@ -174,15 +178,15 @@ def main():
     while True:
         r = select.select([sock, sys.stdin], [], [], None)
         if sock in r[0]:
-            # something to read in socket, read sentence
+            # Something to read in socket, read sentence
             x = apiros.read_sentence()
 
         if sys.stdin in r[0]:
-            # read line from input and strip off newline
+            # Read line from input and strip off newline
             l = sys.stdin.readline()
             l = l[:-1]
 
-            # if empty line, send sentence and start with new
+            # If empty line, send sentence and start with new
             # otherwise append to input sentence
             if l == '':
                 apiros.write_sentence(input_sentence)

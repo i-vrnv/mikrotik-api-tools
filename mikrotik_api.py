@@ -5,7 +5,10 @@ import sys, posix, time, binascii, socket, select, hashlib, mikrotik_backup, mik
 
 
 class ApiRos(object):
-    "Routeros api"
+    """
+    Routeros API
+    """
+
     def __init__(self, sock):
         self.sock = sock
         self.current_tag = 0
@@ -37,7 +40,7 @@ class ApiRos(object):
                 if j == -1:
                     attrs[w] = ''
                 else:
-                    attrs[w[:j]] = w[j+1:]
+                    attrs[w[:j]] = w[j + 1:]
             r.append((reply, attrs))
             if reply == '!done':
                 return r
@@ -59,13 +62,15 @@ class ApiRos(object):
             r.append(w)
 
     def write_word(self, w):
-        #print "<<< " + w
+        # Uncomment to debug
+        print "<<< " + w
         self.write_len(len(w))
         self.write_str(w)
 
     def read_word(self):
         ret = self.read_str(self.read_len())
-        #print ">>> " + ret
+        # Uncomment to debug
+        print ">>> " + ret
         return ret
 
     def write_len(self, l):
@@ -143,21 +148,32 @@ class ApiRos(object):
         return ret
 
     def parse_out(self):
+        """
+        Parse output after write_sentence
+        :return: dictionary
+        """
         r = select.select([self.sock], [], [], None)
-        if self.sock in r[0]:
-            # something to read in socket, read sentence
+        while self.sock in r[0]:
+            # Something to read in socket, read sentence
             output_data = self.read_sentence()
-            # read result, return '!done' if all ok
-            output_status = self.read_sentence()
-            params = {}
+            # Read result, return '!done' if all ok
+            # output_status = self.read_sentence()
+
+            # Dictionary for return
+            output = {}
 
             # Check return status, if "!re" command executed correct
             if output_data[0] == "!re":
-                # Read output lines, [1:] add for remove "!re" in
+                # Read output lines
                 for line in output_data[1:]:
                     line = str(line).split('=')[1:]
-                    params[line[0]] = line[1]
-                return params
+                    output[line[0]] = line[1]
+                # Return dictionary
+                return output
+
+    def execute(self, command):
+        self.write_sentence(command)
+        return self.parse_out()
 
 
 def main():
@@ -170,8 +186,8 @@ def main():
     apiros.login(sys.argv[2], sys.argv[3])
 
     # Create MtDevice instance
-    mt_dev = mikrotik_device.MtDevice(apiros)
-    mikrotik_backup.backup(mt_dev)
+    # mt_dev = mikrotik_device.MtDevice(apiros)
+    # mikrotik_backup.backup(mt_dev)
 
     input_sentence = []
 

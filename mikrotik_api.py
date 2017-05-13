@@ -1,7 +1,11 @@
 #!/usr/bin/python
 # get from https://wiki.mikrotik.com/wiki/Manual:API
 
-import sys, posix, time, binascii, socket, select, hashlib, mikrotik_backup, mikrotik_device
+import binascii
+import hashlib
+import select
+import socket
+import sys
 
 
 class ApiRos(object):

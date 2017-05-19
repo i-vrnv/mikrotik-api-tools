@@ -1,0 +1,15 @@
+[general]
+DEBUG = False
+
+[ftp]
+host = localhost
+port = 21
+username = user
+password = passwd
+
+[mikrotik]
+host = 192.168.88.1
+port = 8291
+username = admin
+password =
+path = Backup

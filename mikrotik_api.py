@@ -13,11 +13,11 @@ class ApiRos(object):
     Routeros API
     """
 
-    def __init__(self, sock, DEBUG=False):
+    def __init__(self, sock, debug=False):
         self.sock = sock
         self.current_tag = 0
 
-        self.DEBUG = DEBUG
+        self.debug = debug
 
     def close(self):
         self.sock.close()
@@ -72,14 +72,14 @@ class ApiRos(object):
 
     def write_word(self, w):
         # Uncomment to debug
-        if self.DEBUG:
+        if self.debug:
             print "<<< " + w
         self.write_len(len(w))
         self.write_str(w)
 
     def read_word(self):
         ret = self.read_str(self.read_len())
-        if self.DEBUG:
+        if self.debug:
             print ">>> " + ret
         return ret
 

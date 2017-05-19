@@ -17,6 +17,9 @@ class ApiRos(object):
         self.sock = sock
         self.current_tag = 0
 
+    def close(self):
+        self.sock.close()
+
     def login(self, username, pwd):
         chal = None
 
@@ -67,14 +70,14 @@ class ApiRos(object):
 
     def write_word(self, w):
         # Uncomment to debug
-        print "<<< " + w
+        #print "<<< " + w
         self.write_len(len(w))
         self.write_str(w)
 
     def read_word(self):
         ret = self.read_str(self.read_len())
         # Uncomment to debug
-        print ">>> " + ret
+        #print ">>> " + ret
         return ret
 
     def write_len(self, l):
@@ -151,33 +154,40 @@ class ApiRos(object):
             ret += s
         return ret
 
+    @property
     def parse_out(self):
         """
         Parse output after write_sentence
         :return: dictionary
         """
-        r = select.select([self.sock], [], [], None)
-        while self.sock in r[0]:
-            # Something to read in socket, read sentence
-            output_data = self.read_sentence()
-            # Read result, return '!done' if all ok
-            # output_status = self.read_sentence()
+        output = {}
+        # Reading output
+        while True:
+            r = select.select([self.sock], [], [], None)
+            if self.sock in r[0]:
+                # Something to read in socket, read sentence
+                received_list = self.read_sentence()
 
-            # Dictionary for return
-            output = {}
+                for item in received_list:
+                    # If item not start with '!' parse and add to output dictionary
+                    if not item.startswith('!'):
+                        item = item.split('=')[1:]
+                        output[item[0]] = item[1]
 
-            # Check return status, if "!re" command executed correct
-            if output_data[0] == "!re":
-                # Read output lines
-                for line in output_data[1:]:
-                    line = str(line).split('=')[1:]
-                    output[line[0]] = line[1]
-                # Return dictionary
-                return output
+                    # If item = "!done", return dictionary
+                    if item == '!done':
+                        # Copy dict to temp variable
+                        temp = output
+                        # Clear dict
+                        output = {}
+                        return temp
+
+        # Return dictionary
+        return output
 
     def execute(self, command):
-        self.write_sentence(command)
-        return self.parse_out()
+        out = self.write_sentence(command)
+        return self.parse_out
 
 
 def main():
@@ -188,10 +198,6 @@ def main():
     # Create apiros instance
     apiros = ApiRos(sock)
     apiros.login(sys.argv[2], sys.argv[3])
-
-    # Create MtDevice instance
-    # mt_dev = mikrotik_device.MtDevice(apiros)
-    # mikrotik_backup.backup(mt_dev)
 
     input_sentence = []
 

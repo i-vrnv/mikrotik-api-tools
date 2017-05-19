@@ -10,10 +10,10 @@ class Config(object):
         self.config.read('config.ini')
 
     def get_ftp(self):
-        ftp = {'host' : self.config.get('ftp', 'host'),
-               'port' : self.config.get('ftp', 'port'),
-               'username' : self.config.get('ftp', 'username'),
-               'password' : self.config.get('ftp', 'password')}
+        ftp = {'host': self.config.get('ftp', 'host'),
+               'port': self.config.get('ftp', 'port'),
+               'username': self.config.get('ftp', 'username'),
+               'password': self.config.get('ftp', 'password')}
         return ftp
 
     def get_devices(self):

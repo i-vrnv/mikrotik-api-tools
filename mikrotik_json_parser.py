@@ -4,6 +4,7 @@ import select
 import sys
 
 from mikrotik_api import ApiRos
+from mikrotik_config_parser import Config
 
 
 def parse_config_file():

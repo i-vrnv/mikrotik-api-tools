@@ -1,14 +1,25 @@
+import socket
+
+from mikrotik_api import ApiRos
+
+
 class MtDevice(object):
     """
     This class contain information about device
     """
-    def __init__(self, apiros):
+    def __init__(self, host, port, username, password):
         """
         :param apiros: instance of ApiROS class
         """
-        self.apiros = apiros
-        self.identity = self.get_identity()
 
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((host, 8728))
+
+        # Create apiros instance
+        self.apiros = ApiRos(sock)
+        self.apiros.login(username, password)
+
+        self.identity = self.get_identity()
         info = self.get_info()
         self.factory_firmware = info['factory-firmware']
         self.firmware_type = info['firmware-type']
@@ -18,16 +29,26 @@ class MtDevice(object):
         self.model = info['model']
         self.current_firmware = info['current-firmware']
 
+    def __del__(self):
+        if self.sock:
+            self.sock.close()
+
     def get_identity(self):
         """
         Get device identity
         :return: Mikrotik identity
         """
-        self.apiros.write_sentence(["/system/identity/print"])
-        info = self.apiros.parse_out()
+        info = self.apiros.execute(["/system/identity/print"])
         return info['name']
 
     def get_info(self):
-        self.apiros.write_sentence(["/system/routerboard/print"])
-        info = self.apiros.parse_out()
+        """
+        Get information about device
+        :return: dictionary
+        """
+        info = self.apiros.execute(["/system/routerboard/print"])
         return info
+
+    def execute(self, command):
+        return self.apiros.execute(command)
+

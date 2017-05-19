@@ -9,6 +9,10 @@ class Config(object):
         self.config = ConfigParser.ConfigParser()
         self.config.read('config.ini')
 
+    def get_general(self):
+        general = {'debug': self.config.get('general', 'debug')}
+        return general
+
     def get_ftp(self):
         ftp = {'host': self.config.get('ftp', 'host'),
                'port': self.config.get('ftp', 'port'),

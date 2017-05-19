@@ -7,15 +7,24 @@ from mikrotik_config_parser import Config
 
 def backup():
     # Get data from config
+    general = Config().get_general()
+    debug = general['debug']
+
     ftp = Config().get_ftp()
     devices = Config().get_devices()
 
     for dev in devices:
+
         # Create socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((dev['host'], 8728))
         # Create apiros instance
-        apiros = ApiRos(sock)
+
+        if debug == "true":
+            apiros = ApiRos(sock, DEBUG=True)
+        else:
+            apiros = ApiRos(sock)
+
         apiros.login(dev['username'], dev['password'])
 
         # Get date

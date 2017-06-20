@@ -14,7 +14,15 @@ class ApiRos(object):
     """
     sock = ''
 
-    def __init__(self, host='', port=8728, user='', password='', debug=False):
+    def __init__(self, host='', port=8728, user='', password='', debug=True):
+        """
+        Initialize object
+        :param host: ip address of mikrotik device
+        :param port: tcp port, 8728 by default, must be integer
+        :param user: username
+        :param password: password to access
+        :param debug: if true, show information in console
+        """
         self.current_tag = 0
         self.debug = debug
 
@@ -24,6 +32,12 @@ class ApiRos(object):
                 self.login(user, password)
 
     def connect(self, host, port):
+        """
+        Connect to mikrotik
+        :param host: hostname to connect to (string, default previous host)
+        :param port: port to connect to (integer, default previous port)
+        :return:
+        """
         # Try to open socket
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -44,6 +58,12 @@ class ApiRos(object):
             sys.exit(1)
 
     def login(self, user, password):
+        """
+        Authentication on device
+        :param user: username must be string
+        :param password: password must be string
+        :return:
+        """
         chal = None
 
         for repl, attrs in self.talk(["/login"]):
@@ -201,7 +221,7 @@ class ApiRos(object):
                         item = item.split('=')[1:]
                         output[item[0]] = item[1]
 
-                    # If item = "!done", return dictionary
+                    # Catch end of message, then return dictionary
                     if item == '!done':
                         # Copy dict to temp variable
                         temp = output
@@ -213,7 +233,27 @@ class ApiRos(object):
         return output
 
     def execute(self, command):
-        out = self.write_sentence(command)
+        """
+        Execute command
+        Example of command:
+        ["/ip/firewall/nat/add",
+                    "=chain=dstnat",
+                    "=action=dst-nat",
+                    "=to-addresses=10.10.10.10",
+                    "=to-ports=80",
+                    "=protocol=tcp",
+                    "=in-interface=ether1-gateway",
+                    "=dst-port=80",
+                    "=place-before=1",
+                    "=comment=added_by_script"]
+
+        For more information read https://wiki.mikrotik.com/wiki/Manual:API
+        :param command: list (command with parameters)
+        :return: dictionary
+        """
+        # Send command
+        self.write_sentence(command)
+        # Return parsed output
         return self.parse_out
 
 

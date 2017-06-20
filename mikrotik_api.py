@@ -12,27 +12,51 @@ class ApiRos(object):
     """
     Routeros API
     """
+    sock = ''
 
-    def __init__(self, sock, debug=False):
-        self.sock = sock
+    def __init__(self, host='', port=8728, user='', password='', debug=False):
         self.current_tag = 0
-
         self.debug = debug
 
-    def close(self):
-        self.sock.close()
+        if host:
+            self.connect(host, port)
+            if user:
+                self.login(user, password)
 
-    def login(self, username, pwd):
+    def connect(self, host, port):
+        # Try to open socket
+        try:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        except socket.error, e:
+            print("Socket creation error: %s" % e)
+
+        # Try to connect to socket
+        try:
+            self.sock.connect((host, port))
+
+        except socket.gaierror, e:
+            print ("Address-related error connecting to server: %s" % e)
+            sys.exit(1)
+
+        except socket.error, e:
+            print ("Connection error: %s" % e)
+            sys.exit(1)
+
+    def login(self, user, password):
         chal = None
 
         for repl, attrs in self.talk(["/login"]):
             chal = binascii.unhexlify(attrs['=ret'])
         md = hashlib.md5()
         md.update('\x00')
-        md.update(pwd)
+        md.update(password)
         md.update(chal)
-        self.talk(["/login", "=name=" + username,
+        self.talk(["/login", "=name=" + user,
                    "=response=00" + binascii.hexlify(md.digest())])
+
+    def close(self):
+        self.sock.close()
 
     def talk(self, words):
         if self.write_sentence(words) == 0:
@@ -194,19 +218,15 @@ class ApiRos(object):
 
 
 def main():
-    # Create socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((sys.argv[1], 8728))
 
-    # Create apiros instance
-    apiros = ApiRos(sock)
+    apiros = ApiRos(sys.argv[1])
     apiros.login(sys.argv[2], sys.argv[3])
 
     input_sentence = []
 
     while True:
-        r = select.select([sock, sys.stdin], [], [], None)
-        if sock in r[0]:
+        r = select.select([apiros.sock, sys.stdin], [], [], None)
+        if apiros.sock in r[0]:
             # Something to read in socket, read sentence
             x = apiros.read_sentence()
 

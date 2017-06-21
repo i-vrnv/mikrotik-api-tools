@@ -14,7 +14,7 @@ class ApiRos(object):
     """
     sock = ''
 
-    def __init__(self, host='', port=8728, user='', password='', debug=True):
+    def __init__(self, host='', port=8728, user='', password='', debug=False):
         """
         Initialize object
         :param host: ip address of mikrotik device
@@ -205,9 +205,10 @@ class ApiRos(object):
     def parse_out(self):
         """
         Parse output after write_sentence
-        :return: dictionary
+        :return: list with dicts
         """
-        output = {}
+        output = []
+        block = {}
         # Reading output
         while True:
             r = select.select([self.sock], [], [], None)
@@ -217,16 +218,24 @@ class ApiRos(object):
 
                 for item in received_list:
                     # If item not start with '!' parse and add to output dictionary
+
+                    if item == '!re' and block:
+                        output.append(block)
+                        block = {}
+
                     if not item.startswith('!'):
                         item = item.split('=')[1:]
-                        output[item[0]] = item[1]
+                        block[item[0]] = item[1]
 
                     # Catch end of message, then return dictionary
                     if item == '!done':
+                        if block:
+                            output.append(block)
+                            block = {}
                         # Copy dict to temp variable
                         temp = output
                         # Clear dict
-                        output = {}
+                        output = []
                         return temp
 
         # Return dictionary

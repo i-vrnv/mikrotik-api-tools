@@ -1,6 +1,6 @@
 import socket
 
-from mikrotik_api import ApiRos
+from api_tools.api import ApiRos
 
 
 class MtDevice(object):

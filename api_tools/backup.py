@@ -1,8 +1,8 @@
 import socket
 import time
 
-from mikrotik_api import ApiRos
-from mikrotik_config_parser import Config
+from api_tools.api import ApiRos
+from api_tools.ini_parser import Config
 
 
 def backup():

@@ -42,19 +42,19 @@ class ApiRos(object):
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        except socket.error, e:
-            print("Socket creation error: %s" % e)
+        except socket.error as e:
+            print(("Socket creation error: %s" % e))
 
         # Try to connect to socket
         try:
             self.sock.connect((host, port))
 
-        except socket.gaierror, e:
-            print ("Address-related error connecting to server: %s" % e)
+        except socket.gaierror as e:
+            print(("Address-related error connecting to server: %s" % e))
             sys.exit(1)
 
-        except socket.error, e:
-            print ("Connection error: %s" % e)
+        except socket.error as e:
+            print(("Connection error: %s" % e))
             sys.exit(1)
 
     def login(self, user, password):
@@ -69,11 +69,10 @@ class ApiRos(object):
         for repl, attrs in self.talk(["/login"]):
             chal = binascii.unhexlify(attrs['=ret'])
         md = hashlib.md5()
-        md.update('\x00')
-        md.update(password)
+        md.update('\x00'.encode())
+        md.update(password.encode())
         md.update(chal)
-        self.talk(["/login", "=name=" + user,
-                   "=response=00" + binascii.hexlify(md.digest())])
+        self.talk(["/login", "=name=" + user, "=response=00" + binascii.hexlify(md.digest()).decode()])
 
     def close(self):
         self.sock.close()
@@ -117,14 +116,14 @@ class ApiRos(object):
     def write_word(self, w):
         # Uncomment to debug
         if self.debug:
-            print "<<< " + w
+            print(("<<< " + w))
         self.write_len(len(w))
         self.write_str(w)
 
     def read_word(self):
         ret = self.read_str(self.read_len())
         if self.debug:
-            print ">>> " + ret
+            print((">>> " + ret))
         return ret
 
     def write_len(self, l):
@@ -187,7 +186,8 @@ class ApiRos(object):
     def write_str(self, string):
         n = 0
         while n < len(string):
-            r = self.sock.send(string[n:])
+            s = string[n:]
+            r = self.sock.send(string[n:].encode())
             if r == 0:
                 raise RuntimeError("connection closed by remote end")
             n += r
@@ -198,7 +198,7 @@ class ApiRos(object):
             s = self.sock.recv(length - len(ret))
             if s == '':
                 raise RuntimeError("connection closed by remote end")
-            ret += s
+            ret += s.decode()
         return ret
 
     @property

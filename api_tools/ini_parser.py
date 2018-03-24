@@ -1,11 +1,11 @@
-import ConfigParser
+import configparser
 
 
 class Config(object):
 
     def __init__(self):
-        self.config = ConfigParser.ConfigParser()
-        self.config.read('config.ini')
+        self.config = configparser.ConfigParser()
+        self.config.read('../config.ini')
 
     def get_general(self):
         general = {'debug': self.config.get('general', 'debug')}
